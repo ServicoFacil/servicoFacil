@@ -1,7 +1,10 @@
 package br.com.servicoFacil.model.entity;
 
 import br.com.servicoFacil.model.DTO.DadosServico;
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -12,9 +15,10 @@ import java.time.LocalDateTime;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = false)
-@Document(collection = "prestador")
+@Document(collection = "prestadorTemporario")
 @NoArgsConstructor
-public class Prestador implements Serializable {
+public class PrestadorTemporario implements Serializable {
+
     @Id
     private String id;
     private String nome;
@@ -25,7 +29,7 @@ public class Prestador implements Serializable {
     private DadosServico dadosServico;
     private LocalDateTime criacao;
     private LocalDateTime modificacao;
+    private String tokenConfirmacao;
+    private LocalDateTime expiracaoToken;
     private boolean ativo;
-
-
 }

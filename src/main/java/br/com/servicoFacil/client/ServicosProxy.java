@@ -11,8 +11,8 @@ import java.util.Optional;
 
 @FeignClient(name = "servicos", url = "${spring.servicos.address}")
 public interface ServicosProxy {
-    @GetMapping(path = "${spring.servicos.url}}", produces = "application/json")
-    Optional<CnpjDto> getCnpj(@PathVariable("cpf") String cpf);
+    @GetMapping(path = "${spring.servicos.url}", produces = "application/json")
+    Optional<CnpjDto> getCnpj(@PathVariable("cnpj") String cnpj);
 }
 
 
