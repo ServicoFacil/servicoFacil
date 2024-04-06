@@ -2,6 +2,22 @@ spring:
   servicos:
       address: https://receitaws.com.br/
       url: v1/cnpj/{cnpj}
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: mvpservicoFacil@gmail.com
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+  main:
+    allow-circular-references: true
   data:
     mongodb:
       uri: mongodb://localhost:27017/servicofacil
