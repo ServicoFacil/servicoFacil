@@ -1,6 +1,5 @@
 package br.com.servicoFacil.service;
 
-import br.com.servicoFacil.model.entity.Prestador;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +17,11 @@ public class EmailService {
     @Autowired
     private JavaMailSender javaMailSender;
 
-    @Autowired
-    private PrestadorService prestadorService;
-
     @Value("${spring.mail.username}")
     private String remetente;
 
     public void envioDeEmailComprovacaoPrestador(String emailPrestador, String token) throws MessagingException {
+        //TODO: Trata exceção, logar o email que está sendo enviado, para manter rastreabilidade
         MimeMessage email = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(email, true);
         String corpoEmail = "<div style=\"background-color: #f4f4f4; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); max-width: 500px; margin: 0 auto; text-align: center;\">"
@@ -43,4 +40,5 @@ public class EmailService {
 
         javaMailSender.send(email);
     }
+
 }

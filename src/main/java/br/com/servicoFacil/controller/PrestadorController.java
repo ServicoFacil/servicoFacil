@@ -8,7 +8,6 @@ import br.com.servicoFacil.model.DTO.request.PrestadorRequest;
 import br.com.servicoFacil.model.DTO.response.CreatePrestadorResponse;
 import br.com.servicoFacil.model.DTO.response.PrestadorResponse;
 import br.com.servicoFacil.service.PrestadorService;
-import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +27,7 @@ public class PrestadorController {
     @PostMapping(path = "/inserir")
     public ResponseEntity save(@RequestBody @Valid PrestadorRequest prestador) throws ServicoFacilException {
         log.info("Recebendo uma novo prestador");
-        CreatePrestadorResponse createPrestadorResponse = PrestadorService.savePrestadorTemporario(prestador);
+        CreatePrestadorResponse createPrestadorResponse = PrestadorService.savePrestador(prestador);
         return ResponseEntity.ok(Objects.requireNonNullElse(createPrestadorResponse, HttpStatus.BAD_REQUEST));
     }
 
