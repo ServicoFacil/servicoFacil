@@ -10,7 +10,8 @@ public enum ServicoFacilError {
     SF0004("Erro ao vincular perfis"),
     SF0001("Prestador não encontrado"),
     SF0005("Erro ao buscar cliente"),
-    SF006("Erro ao salvar cliente"),;
+    SF006("Erro ao salvar cliente"),
+    SF409("CNPJ existente na base de dados");
 
 //TODO: Ajustar devidamente as constantes de error
     @Getter

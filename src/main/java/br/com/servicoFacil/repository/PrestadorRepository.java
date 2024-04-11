@@ -14,5 +14,9 @@ public interface PrestadorRepository extends MongoRepository<Prestador, String>,
     @Query(value = "{ 'cpf' : ?0 }", fields = "{ 'id' : 1 }")
     Optional<String> findIdByCpfUsingQuery(String cpf);
 
+    Optional<Prestador> findByEmail(String email);
 
+    boolean existsByDadosServicoCnpj(String cnpj);
+
+    Optional<Prestador> findByTokenConfirmacao(String token);
 }

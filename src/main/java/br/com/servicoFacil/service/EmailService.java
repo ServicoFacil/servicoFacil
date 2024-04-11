@@ -2,6 +2,7 @@ package br.com.servicoFacil.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 
 @Service
+@Slf4j
 public class EmailService {
 
     @Autowired
@@ -22,6 +24,9 @@ public class EmailService {
 
     public void envioDeEmailComprovacaoPrestador(String emailPrestador, String token) throws MessagingException {
         //TODO: Trata exceção, logar o email que está sendo enviado, para manter rastreabilidade
+        log.info("Enviando e-mail para o endereço do prestador...");
+        log.info("Endereço de e-mail para envio de ativação:  {}", emailPrestador);
+        log.info("Token de confirmação gerado: {}", token);
         MimeMessage email = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(email, true);
         String corpoEmail = "<div style=\"background-color: #f4f4f4; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); max-width: 500px; margin: 0 auto; text-align: center;\">"
@@ -37,6 +42,8 @@ public class EmailService {
         helper.addTo(emailPrestador);
         FileSystemResource img = new FileSystemResource(new File("src/main/resources/arquivos-imagens/serviçoFácil.png"));
         helper.addInline("imagem", img);
+
+        log.info("Corpo da mensagem do e-mail a ser enviado: {}",corpoEmail);
 
         javaMailSender.send(email);
     }
