@@ -151,4 +151,10 @@ public class PrestadorService {
           throw new ServicoFacilException(e, ServicoFacilError.SF0004);
       }
     }
+
+    private void validaCnpjExistente(String cnpj) throws ServicoFacilException {
+        if (repo.existsByDadosServicoCnpj(cnpj)){
+            throw new ServicoFacilException("CNPJ existente na base de dados!", ServicoFacilError.SF409);
+        }
+    }
 }
