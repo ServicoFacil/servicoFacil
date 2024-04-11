@@ -25,6 +25,8 @@ public class Prestador implements Serializable {
     private DadosServico dadosServico;
     private LocalDateTime criacao;
     private LocalDateTime modificacao;
+    private String tokenConfirmacao;
+    private LocalDateTime expiracaoToken;
     private boolean ativo;
 
 

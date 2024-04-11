@@ -9,14 +9,11 @@ import br.com.servicoFacil.model.DTO.request.PrestadorRequest;
 import br.com.servicoFacil.model.DTO.response.CreatePrestadorResponse;
 import br.com.servicoFacil.model.DTO.response.PrestadorResponse;
 import br.com.servicoFacil.model.entity.Prestador;
-import br.com.servicoFacil.model.entity.PrestadorTemporario;
 import br.com.servicoFacil.model.enums.SituacaoCNPJ;
 import br.com.servicoFacil.repository.ClienteRepository;
 import br.com.servicoFacil.repository.PrestadorRepository;
-import br.com.servicoFacil.repository.PrestadorTemporarioRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -46,8 +43,8 @@ public class PrestadorService {
 
     public CreatePrestadorResponse savePrestador(PrestadorRequest prestadorRequest) throws ServicoFacilException {
         boolean ativo = false;
-        Optional<PrestadorTemporario> prestadorOpt = prestadorTemporarioRepository.findByCpf(prestadorRequest.getCpf());
-        PrestadorTemporario prestador = prestadorOpt.orElseGet(() -> PrestadorTemporario.builder().criacao(LocalDateTime.now()).build());
+        Optional<Prestador> prestadorOpt = repo.findByCpf(prestadorRequest.getCpf());
+        Prestador prestador = prestadorOpt.orElseGet(() -> Prestador.builder().criacao(LocalDateTime.now()).build());
 
         prestador.setNome(prestadorRequest.getNome());
         prestador.setCpf(prestadorRequest.getCpf());
@@ -58,16 +55,14 @@ public class PrestadorService {
         prestador.setExpiracaoToken(LocalDateTime.now().plusMinutes(MINUTO_EXPIRACAO_TOKEN));
         prestador.setIdCliente(prestadorRequest.getIsCliente() ? String.valueOf(vinculaCliente(prestadorRequest.getCpf())) : null);
 
-        if (prestadorRequest.getDadosServico().getCnpj() != null) {//TODO: Externalizar validação de CNPJ existente
-            if(prestadorTemporarioRepository.existsByDadosServicoCnpj(prestadorRequest.getDadosServico().getCnpj())){
-                throw new ServicoFacilException("CNPJ existente na base de dados!", HttpStatus.CONFLICT.value());
-            }
-            ativo = validateCnpj(prestadorRequest.getDadosServico().getCnpj());
-            envioEmailPrestadorTemporario(prestadorRequest.getDadosServico().getCnpj(), prestador.getTokenConfirmacao());
+        if (prestadorRequest.getDadosServico().getCnpj() != null) {
+            validaCnpjExistente(prestadorRequest.getDadosServico().getCnpj());
+            CnpjDto cnpj = validateCnpj(prestadorRequest.getDadosServico().getCnpj());
+            envioEmailPrestadorTemporario(cnpj.getEmail(), prestador.getTokenConfirmacao());
         }
 
         try {
-            PrestadorTemporario prestadorSave = prestadorTemporarioRepository.save(prestador);
+            Prestador prestadorSave = repo.save(prestador);
             return CreatePrestadorResponse.builder()
                     .id(prestadorSave.getId())
                     .cnpjAtivo(ativo)
@@ -79,25 +74,14 @@ public class PrestadorService {
     }
 
     public void ativarPrestador(String token) throws ServicoFacilException {
-        PrestadorTemporario prestadorTemporario = prestadorTemporarioRepository.findByTokenConfirmacao(token)
-                .orElseThrow(() -> new ServicoFacilException("E-mail Inválido!", 404));
-        //TODO: A validação é de token ou de email? Já que temos um erro específico para isso, pq não utilizar o erro?
-
-        if(prestadorTemporario.getExpiracaoToken().isBefore(LocalDateTime.now())){
+        Prestador prestador = repo.findByTokenConfirmacao(token)
+                .orElseThrow(() -> new ServicoFacilException("Token não encontrado!", ServicoFacilError.SF0404));
+        if(prestador.getExpiracaoToken().isBefore(LocalDateTime.now())){
             throw new ServicoFacilException("Token Expirado!");
         }
         try {
-            Prestador prestador = new Prestador(); //TODO: Pq não usar o builder?
-            prestador.setNome(prestadorTemporario.getNome());
-            prestador.setCpf(prestadorTemporario.getCpf());
-            prestador.setEmail(prestadorTemporario.getEmail());
-            prestador.setModificacao(LocalDateTime.now());
-            prestador.setDadosServico(prestadorTemporario.getDadosServico());
-            prestador.setIdCliente(prestadorTemporario.getIdCliente());
-            prestador.setDadosServico(prestadorTemporario.getDadosServico());
-            prestador.setAtivo(true);
+            Prestador.builder().ativo(true).build();//TODO: Pq não usar o builder?
             repo.save(prestador);
-            prestadorTemporarioRepository.delete(prestadorTemporario); //TODO: Via de regra, não é recomendado deletar registros, apenas desativar, pois um prestador pode voltar a usar nosso serviço
         } catch (Exception e){
             throw new ServicoFacilException(e, ServicoFacilError.SF0003); //TODO: Ajustar erro, já que o método está nesse caso deletando o registro
         }
@@ -133,22 +117,26 @@ public class PrestadorService {
                 .orElseThrow(() -> new ServicoFacilException(ServicoFacilError.SF0001));
     }
 
-    private boolean validateCnpj(String cnpj) throws ServicoFacilException {
+    private CnpjDto validateCnpj(String cnpj) throws ServicoFacilException {
         try {
             log.info("Validando CNPJ {}", cnpj);
            CnpjDto cnpjDto = servicosProxy.getCnpj(cnpj).orElse(null);
-           return cnpjDto != null && cnpjDto.getSituacao().equals(SituacaoCNPJ.ATIVA.name());
+           boolean cnpjAtivo = cnpjDto != null && cnpjDto.getSituacao().equals(SituacaoCNPJ.ATIVA.name());
+           if(cnpjAtivo){
+              return cnpjDto;
+           } else{
+               throw new ServicoFacilException("CNPJ não encontra-se ativado!", ServicoFacilError.SF0002);
+           }
         } catch (Exception e) {
             throw new ServicoFacilException(e, ServicoFacilError.SF0002);
         }
     }
 
-    private void envioEmailPrestadorTemporario(String cnpj, String token) throws ServicoFacilException {
-        //TODO: Adicionar log para manter a rastreabilidade das ações do sistema
+    private void envioEmailPrestadorTemporario(String email, String token) throws ServicoFacilException {
+        log.info("Endereço de e-mail para envio de ativação:  {}", email);
+        log.info("Token de confirmação gerado: {}", token);
         try{
-            //TODO: No método anterior já foi realizado uma consulta no serviço de cnpj, pq realizar novamente? Poderia ser passado o campo email que já foi retornado anteriormente
-            CnpjDto cnpjDto = servicosProxy.getCnpj(cnpj).orElse(null);
-            emailService.envioDeEmailComprovacaoPrestador(cnpjDto.getEmail(), token);
+            emailService.envioDeEmailComprovacaoPrestador(email, token);
         }catch (Exception e) {
             throw new ServicoFacilException(e, ServicoFacilError.SF0002);
         }
