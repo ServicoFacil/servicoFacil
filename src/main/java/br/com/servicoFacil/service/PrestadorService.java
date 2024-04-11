@@ -32,9 +32,6 @@ public class PrestadorService {
     private PrestadorRepository repo;
 
     @Autowired
-    private PrestadorTemporarioRepository prestadorTemporarioRepository;
-
-    @Autowired
     private ClienteRepository clienteRepository;
 
     @Autowired
