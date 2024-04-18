@@ -1,4 +1,8 @@
 spring:
+  security:
+    jwt:
+      expiracao: 30
+      chave-assinatura: ${CHAVE_ASSINATURA}
   servicos:
       address: https://receitaws.com.br/
       url: v1/cnpj/{cnpj}

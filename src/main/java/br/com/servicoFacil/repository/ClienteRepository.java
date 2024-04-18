@@ -16,4 +16,6 @@ public interface ClienteRepository extends MongoRepository<Cliente, String> {
 
     @Query(value = "{'_id': ?0}", fields = "{'_id': 1}")
     Optional<String> saveAndReturnId(Cliente cliente);
+
+    boolean existsByEmail(String email);
 }

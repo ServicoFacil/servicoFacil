@@ -10,10 +10,12 @@ import br.com.servicoFacil.model.DTO.response.CreatePrestadorResponse;
 import br.com.servicoFacil.model.DTO.response.PrestadorResponse;
 import br.com.servicoFacil.model.entity.Prestador;
 import br.com.servicoFacil.model.enums.SituacaoCNPJ;
+import br.com.servicoFacil.model.enums.TipoUsuarioEnum;
 import br.com.servicoFacil.repository.ClienteRepository;
 import br.com.servicoFacil.repository.PrestadorRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -25,6 +27,7 @@ import java.util.UUID;
 public class PrestadorService {
 
     public static final int MINUTO_EXPIRACAO_TOKEN = 15;
+
     @Autowired
     private ServicosProxy servicosProxy;
 
@@ -35,19 +38,27 @@ public class PrestadorService {
     private ClienteRepository clienteRepository;
 
     @Autowired
+    private UsuarioService usuarioService;
+
+    @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public CreatePrestadorResponse savePrestador(PrestadorRequest prestadorRequest) throws ServicoFacilException {
         boolean ativo = false;
+        String senhaCriptografada = passwordEncoder.encode(prestadorRequest.getSenha());
         Optional<Prestador> prestadorOpt = repo.findByCpf(prestadorRequest.getCpf());
         Prestador prestador = prestadorOpt.orElseGet(() -> Prestador.builder().criacao(LocalDateTime.now()).build());
 
         prestador.setNome(prestadorRequest.getNome());
         prestador.setCpf(prestadorRequest.getCpf());
         prestador.setEmail(prestadorRequest.getEmail());
+        prestador.setSenha(senhaCriptografada);
         prestador.setModificacao(LocalDateTime.now());
         prestador.setDadosServico(prestadorRequest.getDadosServico());
+        prestador.setTipoUsuario(TipoUsuarioEnum.valueOf(TipoUsuarioEnum.PRESTADOR.name()));
         prestador.setTokenConfirmacao(UUID.randomUUID().toString());
         prestador.setExpiracaoToken(LocalDateTime.now().plusMinutes(MINUTO_EXPIRACAO_TOKEN));
         prestador.setIdCliente(prestadorRequest.getIsCliente() ? String.valueOf(vinculaCliente(prestadorRequest.getCpf())) : null);
@@ -55,7 +66,8 @@ public class PrestadorService {
         if (prestadorRequest.getDadosServico().getCnpj() != null) {
             validaCnpjExistente(prestadorRequest.getDadosServico().getCnpj());
             CnpjDto cnpj = validateCnpj(prestadorRequest.getDadosServico().getCnpj());
-            envioEmailPrestadorTemporario(cnpj.getEmail(), prestador.getTokenConfirmacao());
+            ativo = cnpj.getSituacao().equals(SituacaoCNPJ.ATIVA.name());
+            envioEmailPrestador(cnpj.getEmail(), prestador.getTokenConfirmacao());
         }
 
         try {
@@ -84,8 +96,8 @@ public class PrestadorService {
         }
     }
 
-    public DadosServico updateDadosServico(String codigo, DadosServico dados) throws ServicoFacilException {
-        Optional<Prestador> prestadorOptional = repo.findById(codigo);
+    public DadosServico updateDadosServico(DadosServico dados) throws ServicoFacilException {
+        Optional<Prestador> prestadorOptional = repo.findById(usuarioService.usuarioAutenticado().getId());
         return prestadorOptional.map(prestador -> {
             DadosServico dadosServico = prestador.getDadosServico();
             dadosServico.setCategoria(dados.getCategoria());
@@ -100,8 +112,8 @@ public class PrestadorService {
         }).orElseThrow(() -> new ServicoFacilException(ServicoFacilError.SF0001));
     }
 
-    public PrestadorResponse buscaDadosPrestador(String cpf) throws ServicoFacilException {
-        return repo.findByCpf(cpf)
+    public PrestadorResponse buscaDadosPrestador() throws ServicoFacilException {
+        return repo.findByCpf(usuarioService.usuarioAutenticado().getCpf())
                 .map(prestador -> PrestadorResponse.builder()
                         .id(prestador.getId())
                         .cpf(prestador.getCpf())
@@ -129,7 +141,7 @@ public class PrestadorService {
         }
     }
 
-    private void envioEmailPrestadorTemporario(String email, String token) throws ServicoFacilException {
+    private void envioEmailPrestador(String email, String token) throws ServicoFacilException {
         log.info("Endereço de e-mail para envio de ativação:  {}", email);
         log.info("Token de confirmação gerado: {}", token);
         try{

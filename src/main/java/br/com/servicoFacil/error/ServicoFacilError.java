@@ -11,7 +11,8 @@ public enum ServicoFacilError {
     SF0001("Prestador não encontrado"),
     SF0005("Erro ao buscar cliente"),
     SF006("Erro ao salvar cliente"),
-    SF409("CNPJ existente na base de dados");
+    SF409("CNPJ existente na base de dados"),
+    SF401("Senha inválida");
 
 //TODO: Ajustar devidamente as constantes de error
     @Getter

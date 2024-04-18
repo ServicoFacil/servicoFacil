@@ -21,6 +21,9 @@ import java.util.Objects;
 @RequestMapping("servicofacil/prestador/v1")
 @Slf4j
 public class PrestadorController {
+
+    //TODO: Definir permissões para cada endpoint - Verificar papeis na classe se SecurityConfig
+
     @Autowired
     private PrestadorService PrestadorService;
 
@@ -37,20 +40,20 @@ public class PrestadorController {
         return "Prestador Ativado com Sucesso!";
     }
 
-    @PutMapping(path = "/dados-servicos/{codigoPres}")
-    public ResponseEntity updateByCpf(@PathVariable String cpf, @RequestBody @Valid DadosServico dados) throws ServicoFacilException {
+    @PutMapping(path = "/dados-servicos")
+    public ResponseEntity updateByCpf( @RequestBody @Valid DadosServico dados) throws ServicoFacilException {
         log.info("Atualizando dados do prestador");
         if (dados == null) {
             return ResponseEntity.badRequest().build();
         }
-        DadosServico dadosServico = PrestadorService.updateDadosServico(cpf, dados);
+        DadosServico dadosServico = PrestadorService.updateDadosServico(dados);
         return ResponseEntity.ok(Objects.requireNonNullElse(dadosServico, HttpStatus.CONFLICT));
     }
 
-    @GetMapping(path = "/buscaDadosPrestador/{cpf}")
-    public ResponseEntity buscaDadosPrestador(@PathVariable String cpf) throws ServicoFacilException {
+    @GetMapping(path = "/buscaDadosPrestador")
+    public ResponseEntity buscaDadosPrestador() throws ServicoFacilException {
         log.info("Buscando dados do prestador");
-        PrestadorResponse prestador = PrestadorService.buscaDadosPrestador(cpf);
+        PrestadorResponse prestador = PrestadorService.buscaDadosPrestador();
         return ResponseEntity.ok(Objects.requireNonNullElse(prestador, HttpStatus.NOT_FOUND));
     }
 }

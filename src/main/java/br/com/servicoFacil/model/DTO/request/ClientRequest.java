@@ -22,6 +22,7 @@ public class ClientRequest {
     @NotNull(message = "Campo email não pode ser nulo/vazio")
     @Email(message = "Email inválido, por favor verifique")
     public String email;
+    public String senha;
     public Boolean isPrestador;
     public Endereco endereco;
 

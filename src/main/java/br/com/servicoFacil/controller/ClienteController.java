@@ -18,6 +18,9 @@ import java.util.Optional;
 @RequestMapping("servicofacil/cliente/v1")
 @Slf4j
 public class ClienteController {
+
+    //TODO: Definir permissões para cada endpoint - Verificar papeis na classe se SecurityConfig
+
     @Autowired
     private ClienteService clienteService;
 

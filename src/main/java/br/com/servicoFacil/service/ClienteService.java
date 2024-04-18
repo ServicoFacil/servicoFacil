@@ -5,10 +5,12 @@ import br.com.servicoFacil.error.ServicoFacilException;
 import br.com.servicoFacil.model.DTO.request.ClientRequest;
 import br.com.servicoFacil.model.DTO.response.ClienteResponse;
 import br.com.servicoFacil.model.entity.Cliente;
+import br.com.servicoFacil.model.enums.TipoUsuarioEnum;
 import br.com.servicoFacil.repository.ClienteRepository;
 import br.com.servicoFacil.repository.PrestadorRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,8 +24,11 @@ public class ClienteService {
     private ClienteRepository clienteRepo;
     @Autowired
     private PrestadorRepository prestadorRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public Optional<String> saveOrUpdateCliente(ClientRequest clientRequest) throws ServicoFacilException {
+        String senhaCriptografada = passwordEncoder.encode(clientRequest.getSenha());
         Optional<Cliente> clienteExistente = clienteRepo.findByCpf(clientRequest.getCpf());
         LocalDateTime dataAtual = LocalDateTime.now();
         Cliente cliente = clienteExistente.orElseGet(() -> Cliente.builder().criacao(dataAtual).build());
@@ -31,6 +36,8 @@ public class ClienteService {
         cliente.setNome(clientRequest.getNome());
         cliente.setCpf(clientRequest.getCpf());
         cliente.setEmail(clientRequest.getEmail());
+        cliente.setSenha(senhaCriptografada);
+        cliente.setTipoUsuario(TipoUsuarioEnum.CLIENTE);
         cliente.setModificacao(dataAtual);
         cliente.setIdPrestador(clientRequest.getIsPrestador() ? String.valueOf(vinculaPrestador(clientRequest.getCpf())) : null);
         cliente.setEndereco(clientRequest.getEndereco());
