@@ -2,6 +2,9 @@ package br.com.servicoFacil.repository;
 
 import br.com.servicoFacil.model.entity.Prestador;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -16,16 +19,26 @@ public class PrestadorRepositoryImpl implements PrestadorRepositoryCustom{
     }
 
     @Override
-    public List<Prestador> findByCriteria(String criterio) {
+    public Page<Prestador> findByDynamicQuery(String nome, String formaPagamento, String cnpj, String categoria, int tempoExperiencia, Pageable pageable) {
         Query query = new Query();
-        Criteria criteria = new Criteria().orOperator(
-                Criteria.where("cpf").is(criterio),
-                Criteria.where("dadosServico.cnpj").is(criterio),
-                Criteria.where("nome").regex(criterio, "i"),
-                Criteria.where("dadosServico.categoria").in(criterio)
-        );
-        query.addCriteria(criteria);
-        return mongoTemplate.find(query, Prestador.class);
+        if (nome != null) {
+            query.addCriteria(Criteria.where("nome").regex(nome, "i"));
+        }
+        if (formaPagamento != null) {
+            query.addCriteria(Criteria.where("dadosServico.formaPagamento").is(formaPagamento));
+        }
+        if (cnpj != null) {
+            query.addCriteria(Criteria.where("dadosServico.cnpj").is(cnpj));
+        }
+        if (categoria != null) {
+            query.addCriteria(Criteria.where("dadosServico.categoria").is(categoria));
+        }
+        if (tempoExperiencia > 0) {
+            query.addCriteria(Criteria.where("dadosServico.tempoExperiencia").gte(tempoExperiencia));
+        }
+        List<Prestador> prestadores = mongoTemplate.find(query.with(pageable), Prestador.class);
+        long totalElements = mongoTemplate.count(query, Prestador.class);
+        return new PageImpl<>(prestadores, pageable, totalElements);
     }
 
 }

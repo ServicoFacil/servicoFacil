@@ -1,6 +1,6 @@
 package br.com.servicoFacil.model.entity;
 
-import br.com.servicoFacil.model.DTO.DadosServico;
+import br.com.servicoFacil.model.enums.TipoUsuarioEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -15,21 +15,19 @@ import java.time.LocalDateTime;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = false)
-@Document(collection = "prestadorTemporario")
+@Document(collection = "usuario")
 @NoArgsConstructor
-public class PrestadorTemporario implements Serializable {
+public class Usuario implements Serializable {
 
     @Id
     private String id;
     private String nome;
     private String email;
-    private String cpf;
     private String senha;
-    private String idCliente;
-    private DadosServico dadosServico;
+    private String cpf;
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime criacao;
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime modificacao;
-    private String tokenConfirmacao;
-    private LocalDateTime expiracaoToken;
-    private boolean ativo;
+    private TipoUsuarioEnum tipoUsuario;
 }

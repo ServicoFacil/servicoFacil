@@ -18,6 +18,7 @@ import java.util.Optional;
 @RequestMapping("servicofacil/cliente/v1")
 @Slf4j
 public class ClienteController {
+
     @Autowired
     private ClienteService clienteService;
 
@@ -27,7 +28,6 @@ public class ClienteController {
          Optional<String> codigoCli = clienteService.saveOrUpdateCliente(user);
         return ResponseEntity.ok(Objects.requireNonNullElse(codigoCli, HttpStatus.CONFLICT).toString());
     }
-//TODO: tratar possível nullpointers
     @GetMapping(path = "/buscarDadosClientes/{cpf}")
     public ResponseEntity busca(@PathVariable("codigo") String cpf) throws ServicoFacilException {
         log.info("Buscando cliente");

@@ -12,19 +12,14 @@ import java.time.LocalDateTime;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = false)
-@Document(collection = "prestador")
 @NoArgsConstructor
-public class Prestador implements Serializable {
-    @Id
-    private String id;
-    private String nome;
-    private String email;
-    private String cpf;
-    private String senha;
+public class Prestador extends Usuario implements Serializable {
+
+    private String cnpj;
     private String idCliente;
     private DadosServico dadosServico;
-    private LocalDateTime criacao;
-    private LocalDateTime modificacao;
+    private String tokenConfirmacao;
+    private LocalDateTime expiracaoToken;
     private boolean ativo;
 
 

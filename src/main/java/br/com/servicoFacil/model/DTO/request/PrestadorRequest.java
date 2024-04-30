@@ -21,6 +21,7 @@ public class PrestadorRequest {
     @Email(message = "Email inválido, por favor verifique")
     @NotNull(message = "Campo email não pode ser nulo/vazio")
     private String email;
+    private String senha;
     @CPF(message = "CPF inválido, por favor verifique")
     @NotNull(message = "Campo cpf não pode ser nulo/vazio")
     private String cpf;

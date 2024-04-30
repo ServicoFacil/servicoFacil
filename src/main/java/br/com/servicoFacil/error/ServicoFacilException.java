@@ -19,15 +19,11 @@ public class ServicoFacilException extends Exception{
         this.error = ServicoFacilError.SF9999;
     }
 
-    public ServicoFacilException(String message, int statusCode){
+    public ServicoFacilException(String message, ServicoFacilError servicoFacilError){
         super(message);
-        this.error = (statusCode == HttpStatus.NOT_FOUND.value()) ? ServicoFacilError.SF0404 : ServicoFacilError.SF9999;
+        this.error = servicoFacilError;
     }
 
-    public ServicoFacilException(String message, Throwable cause) {
-        super(message, cause);
-        this.error = ServicoFacilError.SF9999;
-    }
 
     public ServicoFacilException(Exception e, ServicoFacilError servicoFacilError) {
         super(e);
