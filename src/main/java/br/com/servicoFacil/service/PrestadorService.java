@@ -15,6 +15,9 @@ import br.com.servicoFacil.repository.ClienteRepository;
 import br.com.servicoFacil.repository.PrestadorRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -79,20 +82,19 @@ public class PrestadorService {
         } catch (Exception e) {
             throw new ServicoFacilException(e, ServicoFacilError.SF0003);
         }
-    //TODO: Criar um mapper para converter PrestadorTemporario em Prestador
     }
 
     public void ativarPrestador(String token) throws ServicoFacilException {
         Prestador prestador = repo.findByTokenConfirmacao(token)
-                .orElseThrow(() -> new ServicoFacilException("Token não encontrado!", ServicoFacilError.SF0404));
+                .orElseThrow(() -> new ServicoFacilException("Token não encontrado!", ServicoFacilError.SF007));
         if(prestador.getExpiracaoToken().isBefore(LocalDateTime.now())){
-            throw new ServicoFacilException("Token Expirado!");
+            throw new ServicoFacilException("Token Expirado!", ServicoFacilError.SF011);
         }
         try {
-            Prestador.builder().ativo(true).build();//TODO: Pq não usar o builder?
+            Prestador.builder().ativo(true).build();
             repo.save(prestador);
         } catch (Exception e){
-            throw new ServicoFacilException(e, ServicoFacilError.SF0003); //TODO: Ajustar erro, já que o método está nesse caso deletando o registro
+            throw new ServicoFacilException(e, ServicoFacilError.SF0003);
         }
     }
 
@@ -112,18 +114,17 @@ public class PrestadorService {
         }).orElseThrow(() -> new ServicoFacilException(ServicoFacilError.SF0001));
     }
 
-    public PrestadorResponse buscaDadosPrestador() throws ServicoFacilException {
-        return repo.findByCpf(usuarioService.usuarioAutenticado().getCpf())
-                .map(prestador -> PrestadorResponse.builder()
-                        .id(prestador.getId())
-                        .cpf(prestador.getCpf())
-                        .nome(prestador.getNome())
-                        .email(prestador.getEmail())
-                        .dadosServico(prestador.getDadosServico())
-                        .idCliente(prestador.getIdCliente() != null ? prestador.getIdCliente() : null)
-                        .cnpjAtivo(prestador.getDadosServico().getCnpjAtivo())
-                        .build())
-                .orElseThrow(() -> new ServicoFacilException(ServicoFacilError.SF0001));
+    public Page<PrestadorResponse> buscaDadosPrestador(String nome, String formaPagamento, String cnpj, String categoria, int tempoExperiencia, Pageable pageable) throws ServicoFacilException {
+        Page<Prestador> prestadores = repo.findByDynamicQuery(nome, formaPagamento, cnpj, categoria, tempoExperiencia, pageable);
+        return prestadores.map(prestador -> PrestadorResponse.builder()
+                .id(prestador.getId())
+                .cpf(prestador.getCpf())
+                .nome(prestador.getNome())
+                .email(prestador.getEmail())
+                .dadosServico(prestador.getDadosServico())
+                .idCliente(prestador.getIdCliente() != null ? prestador.getIdCliente() : null)
+                .cnpjAtivo(prestador.getDadosServico().getCnpjAtivo())
+                .build());
     }
 
     private CnpjDto validateCnpj(String cnpj) throws ServicoFacilException {
@@ -163,7 +164,7 @@ public class PrestadorService {
 
     private void validaCnpjExistente(String cnpj) throws ServicoFacilException {
         if (repo.existsByDadosServicoCnpj(cnpj)){
-            throw new ServicoFacilException("CNPJ existente na base de dados!", ServicoFacilError.SF409);
+            throw new ServicoFacilException("CNPJ existente na base de dados!", ServicoFacilError.SF008);
         }
     }
 }

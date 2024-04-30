@@ -11,7 +11,6 @@ import br.com.servicoFacil.service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,7 +38,7 @@ public class UsuarioController {
             return new TokenResponseDTO(usuarioAutenticado.getUsername(), token);
 
         } catch (Exception e) {
-            throw new ServicoFacilException(e, ServicoFacilError.SF401);
+            throw new ServicoFacilException(e, ServicoFacilError.SF009);
         }
     }
 }

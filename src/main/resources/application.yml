@@ -2,7 +2,7 @@ spring:
   security:
     jwt:
       expiracao: 30
-      chave-assinatura: ${CHAVE_ASSINATURA}
+      chave-assinatura: mvpservicoFacil@gmail.com
   servicos:
       address: https://receitaws.com.br/
       url: v1/cnpj/{cnpj}
@@ -10,7 +10,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: mvpservicoFacil@gmail.com
-    password: ${EMAIL_PASSWORD}
+    password: 255456servicoFacil@
     properties:
       mail:
         smtp:
@@ -24,4 +24,5 @@ spring:
     allow-circular-references: true
   data:
     mongodb:
-      uri: mongodb://localhost:27017/servicofacil
+      uri: mongodb+srv://mvpservicofacil:AwQsSKn5l7pACxRv@cluster0.brnhojy.mongodb.net/
+      database: usuario

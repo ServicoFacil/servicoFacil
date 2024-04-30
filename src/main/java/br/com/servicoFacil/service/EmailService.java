@@ -23,10 +23,7 @@ public class EmailService {
     private String remetente;
 
     public void envioDeEmailComprovacaoPrestador(String emailPrestador, String token) throws MessagingException {
-        //TODO: Trata exceção, logar o email que está sendo enviado, para manter rastreabilidade
-        log.info("Enviando e-mail para o endereço do prestador...");
-        log.info("Endereço de e-mail para envio de ativação:  {}", emailPrestador);
-        log.info("Token de confirmação gerado: {}", token);
+        log.info("Enviando e-mail para o endereço do prestador, [Email: {}] com o token de confirmação gerado [Token: {}]", emailPrestador, token);
         MimeMessage email = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(email, true);
         String corpoEmail = "<div style=\"background-color: #f4f4f4; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); max-width: 500px; margin: 0 auto; text-align: center;\">"

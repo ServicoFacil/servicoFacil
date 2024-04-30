@@ -24,10 +24,6 @@ public class ServicoFacilException extends Exception{
         this.error = servicoFacilError;
     }
 
-    public ServicoFacilException(String message, Throwable cause) {
-        super(message, cause);
-        this.error = ServicoFacilError.SF9999;
-    }
 
     public ServicoFacilException(Exception e, ServicoFacilError servicoFacilError) {
         super(e);

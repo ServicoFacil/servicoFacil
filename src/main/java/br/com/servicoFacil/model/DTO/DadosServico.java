@@ -15,6 +15,7 @@ public class DadosServico {
 
     private List<String> categoria;
     private String descExperiencia;
+    private int tmpExperiencia;
     @CNPJ(message = "CNPJ inválido, por favor verifique")
     private String cnpj;
     private Boolean cnpjAtivo;
