@@ -19,7 +19,7 @@ public class PrestadorRepositoryImpl implements PrestadorRepositoryCustom{
     }
 
     @Override
-    public Page<Prestador> findByDynamicQuery(String nome, String formaPagamento, String cnpj, String categoria, int tempoExperiencia, Pageable pageable) {
+    public Page<Prestador> findByDynamicQuery(String nome, String formaPagamento, String cnpj, String categoria, Integer tempoExperiencia, Pageable pageable) {
         Query query = new Query();
         if (nome != null) {
             query.addCriteria(Criteria.where("nome").regex(nome, "i"));
@@ -33,8 +33,8 @@ public class PrestadorRepositoryImpl implements PrestadorRepositoryCustom{
         if (categoria != null) {
             query.addCriteria(Criteria.where("dadosServico.categoria").is(categoria));
         }
-        if (tempoExperiencia > 0) {
-            query.addCriteria(Criteria.where("dadosServico.tempoExperiencia").gte(tempoExperiencia));
+        if (tempoExperiencia != null && tempoExperiencia > 0) {
+            query.addCriteria(Criteria.where("dadosServico.tmpExperiencia").gte(tempoExperiencia));
         }
         List<Prestador> prestadores = mongoTemplate.find(query.with(pageable), Prestador.class);
         long totalElements = mongoTemplate.count(query, Prestador.class);

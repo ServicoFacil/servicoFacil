@@ -21,6 +21,6 @@ public interface PrestadorRepository extends MongoRepository<Prestador, String>,
 
     Optional<Prestador> findByTokenConfirmacao(String token);
     @Override
-    Page<Prestador> findByDynamicQuery(String nome, String formaPagamento, String cnpj, String categoria, int tempoExperiencia, Pageable pageable);
+    Page<Prestador> findByDynamicQuery(String nome, String formaPagamento, String cnpj, String categoria, Integer tempoExperiencia, Pageable pageable);
 
 }

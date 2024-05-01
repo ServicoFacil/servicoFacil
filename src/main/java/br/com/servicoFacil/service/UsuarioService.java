@@ -2,11 +2,8 @@ package br.com.servicoFacil.service;
 
 import br.com.servicoFacil.error.ServicoFacilError;
 import br.com.servicoFacil.error.ServicoFacilException;
-import br.com.servicoFacil.model.entity.Prestador;
 import br.com.servicoFacil.model.entity.Usuario;
 import br.com.servicoFacil.model.enums.TipoUsuarioEnum;
-import br.com.servicoFacil.repository.ClienteRepository;
-import br.com.servicoFacil.repository.PrestadorRepository;
 import br.com.servicoFacil.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;

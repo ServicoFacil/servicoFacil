@@ -21,6 +21,7 @@ public class DadosServico {
     private Boolean cnpjAtivo;
     private String telefone;
     private String emailCoorporativo;
+    private String emailVincCnpj;
     private String nomeAlternativo;
     private Endereco endereco;
     private boolean orcamento;

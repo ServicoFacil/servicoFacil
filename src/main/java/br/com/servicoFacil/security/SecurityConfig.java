@@ -1,6 +1,5 @@
 package br.com.servicoFacil.security;
 
-import br.com.servicoFacil.model.entity.Usuario;
 import br.com.servicoFacil.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -21,14 +20,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfig {
-
-    public static final String PRESTADOR = "hasRole('PRESTADOR')";
-
-    public static final String CLIENTE = "hasRole('CLIENTE')";
-
-    public static final String PRESTADOR_CLIENTE = "hasAnyRole('PRESTADOR, CLIENTE')";
-
-    public static final String PERMIT_ALL = "permitAll()";
 
     @Autowired
     private UsuarioService usuarioService;
@@ -53,8 +44,10 @@ public class SecurityConfig {
         http.authorizeHttpRequests(req ->{
             req.requestMatchers("/servicofacil/prestador/v1/inserir").permitAll();
             req.requestMatchers("/servicofacil/prestador/v1/ativar-conta/{token}").permitAll();
+            req.requestMatchers("/servicofacil/prestador/v1/buscaDadosPrestador").permitAll();
             req.requestMatchers("/servicofacil/cliente/v1/inserir").permitAll();
             req.requestMatchers("/servicofacil/usuario/v1/autenticar").permitAll();
+            req.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll();
             req.anyRequest().authenticated();
         }).addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
         http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));

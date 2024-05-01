@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class Endereco {
 
     public String cep;
+    public String estado;
     public String logradouro;
     public String bairro;
     public String numero;

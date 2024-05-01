@@ -13,9 +13,9 @@ import br.com.servicoFacil.model.enums.SituacaoCNPJ;
 import br.com.servicoFacil.model.enums.TipoUsuarioEnum;
 import br.com.servicoFacil.repository.ClienteRepository;
 import br.com.servicoFacil.repository.PrestadorRepository;
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,27 +30,46 @@ import java.util.UUID;
 public class PrestadorService {
 
     public static final int MINUTO_EXPIRACAO_TOKEN = 15;
-
+    public static final String EMPYT = "";
     @Autowired
     private ServicosProxy servicosProxy;
-
     @Autowired
     private PrestadorRepository repo;
-
     @Autowired
     private ClienteRepository clienteRepository;
-
     @Autowired
     private UsuarioService usuarioService;
-
     @Autowired
     private EmailService emailService;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+
     public CreatePrestadorResponse savePrestador(PrestadorRequest prestadorRequest) throws ServicoFacilException {
+        Prestador prestador = buildPrestadorFromRequest(prestadorRequest);
+
         boolean ativo = false;
+        boolean contemDadosServicos = prestador.getDadosServico() != null && prestadorRequest.getDadosServico().getCnpj() != null;
+
+        if (contemDadosServicos) {
+            CnpjDto cnpj = validateAndSendEmail(prestadorRequest.getDadosServico().getCnpj(), prestador.getTokenConfirmacao());
+            ativo = cnpj.getSituacao().equals(SituacaoCNPJ.ATIVA.name());
+            prestador.getDadosServico().setCnpjAtivo(ativo);
+            prestador.getDadosServico().setEmailVincCnpj(cnpj.getEmail());
+        } else sendEmail(prestador.getEmail(), prestador.getTokenConfirmacao());
+
+        try {
+            Prestador prestadorSave = repo.save(prestador);
+            return CreatePrestadorResponse.builder()
+                    .id(prestadorSave.getId())
+                    .cnpjAtivo(ativo)
+                    .build();
+        } catch (Exception e) {
+            throw new ServicoFacilException(e, ServicoFacilError.SF0003);
+        }
+    }
+
+    private Prestador buildPrestadorFromRequest(PrestadorRequest prestadorRequest) throws ServicoFacilException {
         String senhaCriptografada = passwordEncoder.encode(prestadorRequest.getSenha());
         Optional<Prestador> prestadorOpt = repo.findByCpf(prestadorRequest.getCpf());
         Prestador prestador = prestadorOpt.orElseGet(() -> Prestador.builder().criacao(LocalDateTime.now()).build());
@@ -66,22 +85,18 @@ public class PrestadorService {
         prestador.setExpiracaoToken(LocalDateTime.now().plusMinutes(MINUTO_EXPIRACAO_TOKEN));
         prestador.setIdCliente(prestadorRequest.getIsCliente() ? String.valueOf(vinculaCliente(prestadorRequest.getCpf())) : null);
 
-        if (prestadorRequest.getDadosServico().getCnpj() != null) {
-            validaCnpjExistente(prestadorRequest.getDadosServico().getCnpj());
-            CnpjDto cnpj = validateCnpj(prestadorRequest.getDadosServico().getCnpj());
-            ativo = cnpj.getSituacao().equals(SituacaoCNPJ.ATIVA.name());
-            envioEmailPrestador(cnpj.getEmail(), prestador.getTokenConfirmacao());
-        }
+        return prestador;
+    }
 
-        try {
-            Prestador prestadorSave = repo.save(prestador);
-            return CreatePrestadorResponse.builder()
-                    .id(prestadorSave.getId())
-                    .cnpjAtivo(ativo)
-                    .build();
-        } catch (Exception e) {
-            throw new ServicoFacilException(e, ServicoFacilError.SF0003);
-        }
+    private CnpjDto validateAndSendEmail(String cnpj, String tokenConfirmacao) throws ServicoFacilException {
+        validaCnpjExistente(cnpj);
+        CnpjDto cnpjDto = validateCnpj(cnpj);
+        envioEmailPrestador(cnpjDto.getEmail(), tokenConfirmacao);
+        return cnpjDto;
+    }
+
+    private void sendEmail(String email, String tokenConfirmacao) throws ServicoFacilException {
+        envioEmailPrestador(email, tokenConfirmacao);
     }
 
     public void ativarPrestador(String token) throws ServicoFacilException {
@@ -91,13 +106,12 @@ public class PrestadorService {
             throw new ServicoFacilException("Token Expirado!", ServicoFacilError.SF011);
         }
         try {
-            Prestador.builder().ativo(true).build();
+            prestador.setAtivo(true);
             repo.save(prestador);
         } catch (Exception e){
             throw new ServicoFacilException(e, ServicoFacilError.SF0003);
         }
     }
-
     public DadosServico updateDadosServico(DadosServico dados) throws ServicoFacilException {
         Optional<Prestador> prestadorOptional = repo.findById(usuarioService.usuarioAutenticado().getId());
         return prestadorOptional.map(prestador -> {
@@ -105,6 +119,8 @@ public class PrestadorService {
             dadosServico.setCategoria(dados.getCategoria());
             dadosServico.setDescExperiencia(dados.getDescExperiencia());
             dadosServico.setCnpj(dados.getCnpj());
+            dadosServico.setCnpjAtivo(dados.getCnpjAtivo());
+            dadosServico.setTmpExperiencia(dados.getTmpExperiencia());
             dadosServico.setOrcamento(dados.isOrcamento());
             dadosServico.setNomeAlternativo(dados.getNomeAlternativo());
             dadosServico.setFormaPagamento(dados.getFormaPagamento());
@@ -114,7 +130,7 @@ public class PrestadorService {
         }).orElseThrow(() -> new ServicoFacilException(ServicoFacilError.SF0001));
     }
 
-    public Page<PrestadorResponse> buscaDadosPrestador(String nome, String formaPagamento, String cnpj, String categoria, int tempoExperiencia, Pageable pageable) throws ServicoFacilException {
+    public Page<PrestadorResponse> buscaDadosPrestador(String nome, String formaPagamento, String cnpj, String categoria, Integer tempoExperiencia, Pageable pageable) throws ServicoFacilException {
         Page<Prestador> prestadores = repo.findByDynamicQuery(nome, formaPagamento, cnpj, categoria, tempoExperiencia, pageable);
         return prestadores.map(prestador -> PrestadorResponse.builder()
                 .id(prestador.getId())
@@ -122,23 +138,27 @@ public class PrestadorService {
                 .nome(prestador.getNome())
                 .email(prestador.getEmail())
                 .dadosServico(prestador.getDadosServico())
-                .idCliente(prestador.getIdCliente() != null ? prestador.getIdCliente() : null)
-                .cnpjAtivo(prestador.getDadosServico().getCnpjAtivo())
+                .idCliente(Optional.ofNullable(prestador.getIdCliente()).orElse(null))
+                .cnpjAtivo(Optional.ofNullable(prestador.getDadosServico()).map(DadosServico::getCnpjAtivo).orElse(null))
                 .build());
     }
 
     private CnpjDto validateCnpj(String cnpj) throws ServicoFacilException {
         try {
             log.info("Validando CNPJ {}", cnpj);
-           CnpjDto cnpjDto = servicosProxy.getCnpj(cnpj).orElse(null);
-           boolean cnpjAtivo = cnpjDto != null && cnpjDto.getSituacao().equals(SituacaoCNPJ.ATIVA.name());
-           if(cnpjAtivo){
-              return cnpjDto;
-           } else{
-               throw new ServicoFacilException("CNPJ não encontra-se ativado!", ServicoFacilError.SF0002);
-           }
-        } catch (Exception e) {
-            throw new ServicoFacilException(e, ServicoFacilError.SF0002);
+            cnpj = cnpj.replaceAll("\\p{Punct}", EMPYT);
+            CnpjDto cnpjDto = servicosProxy.getCnpj(cnpj).orElse(null);
+            if (cnpjDto != null && cnpjDto.getSituacao().equals(SituacaoCNPJ.ATIVA.name())) {
+                return cnpjDto;
+            } else {
+                throw new ServicoFacilException("CNPJ não encontra-se ativado!", ServicoFacilError.SF0002);
+            }
+        } catch (FeignException.FeignClientException ex) {
+            if (ex.status() == 404) {
+                throw new ServicoFacilException("CNPJ não encontrado!", ServicoFacilError.SF0002);
+            } else {
+                throw new ServicoFacilException(ex, ServicoFacilError.SF0002);
+            }
         }
     }
 
